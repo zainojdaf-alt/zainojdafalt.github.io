@@ -1,6 +1,6 @@
 ---------------------------------------------------
 Here are the ownership and the certification details
-of the Web Dashers 1.0
+of the Web Dashers 1.1 (NEW UPDATE 1.1!)
 ---------------------------------------------------
 
 app_name - 						Web Dashers
@@ -12,7 +12,7 @@ app_author - 			zainojdaf (github)
 app_author_state - 				Bayern (Idk what this is)
 app_author_country - 			Netherlands
 app_password - 					4UZFCG3EpL9F
-app_versionName - 				versionName "1.0"
+app_versionName - 				versionName "1.1"
 app_versionCode - 				100
 
 ------------------------------------------------------
