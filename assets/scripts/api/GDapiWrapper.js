@@ -24,7 +24,7 @@ window.ApiWrapper = class ApiWrapper {
 		return window.URL.createObjectURL(blob);
     }
 	static async downloadLevel(id) {
-		let data = `levelID=${id}&secret=Wmfd2893gb7`
+		let data = `levelID=${id}&inc=1&extras=1&secret=Wmfd2893gb7`
 		let response = await fetch(window._gdProxyUrl + "/downloadGJLevel22.php", {
 			method: "POST",
 			body: data
