@@ -25,7 +25,7 @@ window.ApiWrapper = class ApiWrapper {
     }
 	static async downloadLevel(id) {
 		let data = `levelID=${id}&secret=Wmfd2893gb7`
-		let response = await fetch(window._gdDirectUrl + "/downloadGJLevel22.php", {
+		let response = await fetch(window._gdProxyUrl + "/downloadGJLevel22.php", {
 			method: "POST",
 			body: data
 		});
