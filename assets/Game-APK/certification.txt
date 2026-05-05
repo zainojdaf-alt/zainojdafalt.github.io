@@ -1,0 +1,62 @@
+---------------------------------------------------
+Here are the ownership and the certification details
+of the Web Dashers 1.1 (NEW UPDATE 1.1!)
+---------------------------------------------------
+
+app_name - 						Web Dashers
+app_alias - 					webdashers
+app_author_website - 				github.com/web-dashers/web-dashers.github.io
+app_author - 	All the developers of Web Dashers
+app_author - 		Robtop Games
+app_author - 			zainojdaf (github)
+app_author_state - 				Bayern (Idk what this is)
+app_author_country - 			Netherlands
+app_password - 					4UZFCG3EpL9F
+app_versionName - 				versionName "1.1"
+app_versionCode - 				100
+
+------------------------------------------------------
+The certification was created by zainojdaf (github) at
+the Saturday 2nd of May 2026 11:02:55 AM
+----------------------------------------------------
+https://github.com/web-dashers/web-dashers.github.io
+https://geometrydash.com
+https://github.com/zainojdaf
+-----------------
+Original Creator: 
+Robtop Games
+----------
+Modded by:
+BreadBB
+PinkDev
+rohanis0000
+bog
+AntiMatter
+arbstro
+aloaf
+Lasokar
+-------------------------------------------------------------------
+Github Contributors: (github.com/web-dashers/web-dashers.github.io)
+rohanis0000
+genizy
+PopsicleYT (Pinkdev)
+aloaf812 (aloaf)
+antonfdiaz
+lasokar
+q8j-dev
+aukak
+arbstro
+CoraBitz
+BeezBumba
+NightCaat
+gradylink
+n9t-k
+---------------------------------------------------
+Web Dashers versions:
+Apk (MADE)
+EXE (WILL BE MADE)
+Website (MADE)
+ipa (ios) (WILL BE MADE)
+MORE SOON!
+------------------------
+Credits to all creators, have fun :)
