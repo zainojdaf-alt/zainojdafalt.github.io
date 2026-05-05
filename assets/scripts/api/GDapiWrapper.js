@@ -30,6 +30,7 @@ window.ApiWrapper = class ApiWrapper {
 			body: data
 		});
 		let text = await response.text();
+		console.log("LEVEL RAW:", text);
 
 		function parseresponse(text) {
 			let parts = text.split(":");
@@ -43,7 +44,7 @@ window.ApiWrapper = class ApiWrapper {
 			return data;
 		}
 		let parsed = parseresponse(text);
-		return new LevelObject(parsed["1"], parsed["2"], atob(parsed["3"] || ""), parsed["4"], parsed["5"], parsed["6"], parsed["8"], parsed["9"], parsed["10"], parsed["11"], parsed["12"], parsed["13"], parsed["14"], parsed["15"], parsed["16"], parsed["17"] === "1", parsed["18"], parsed["19"], parsed["25"] === "1", parsed["26"], parsed["27"], parsed["28"], parsed["29"], parsed["30"], parsed["31"] === "1", parsed["35"], parsed["36"], parsed["37"], parsed["38"] === "1", parsed["39"], parsed["40"] === "1", parsed["41"], parsed["42"], parsed["43"], parsed["44"] === "1", parsed["45"], parsed["46"], parsed["47"], parsed["48"], parsed["52"]?.split(",") || [], parsed["53"]?.split(",") || [], parsed["54"], parsed["57"]);
+		return new LevelObject(parsed["1"], parsed["2"], parsed["3"] ? atob(parsed["3"]) : "", parsed["4"], parsed["5"], parsed["6"], parsed["8"], parsed["9"], parsed["10"], parsed["11"], parsed["12"], parsed["13"], parsed["14"], parsed["15"], parsed["16"], parsed["17"] === "1", parsed["18"], parsed["19"], parsed["25"] === "1", parsed["26"], parsed["27"], parsed["28"], parsed["29"], parsed["30"], parsed["31"] === "1", parsed["35"], parsed["36"], parsed["37"], parsed["38"] === "1", parsed["39"], parsed["40"] === "1", parsed["41"], parsed["42"], parsed["43"], parsed["44"] === "1", parsed["45"], parsed["46"], parsed["47"], parsed["48"], parsed["52"]?.split(",") || [], parsed["53"]?.split(",") || [], parsed["54"], parsed["57"]);
 	}
 }
 
