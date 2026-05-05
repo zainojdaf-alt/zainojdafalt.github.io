@@ -5692,6 +5692,20 @@ _applyMirrorEffect() {
             mirror.setText(isPassword ? '•'.repeat(val.length) : val);
         });
 
+        // Block ALL keyboard events from reaching Phaser while this input is focused
+        const stopKey = (e) => e.stopPropagation();
+        el.addEventListener('keydown', stopKey, true);
+        el.addEventListener('keyup',   stopKey, true);
+        el.addEventListener('keypress',stopKey, true);
+
+        // Disable Phaser keyboard capture while focused
+        el.addEventListener('focus', () => {
+            if (this.input && this.input.keyboard) this.input.keyboard.enabled = false;
+        });
+        el.addEventListener('blur', () => {
+            if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
+        });
+
         // click on bg box focuses the real input
         const hitZone = this.add.zone(x, y, w, h).setScrollFactor(0).setDepth(303).setInteractive();
         popup.add(hitZone);
@@ -5704,7 +5718,10 @@ _applyMirrorEffect() {
     };
 
     // ── HTML cleanup ──────────────────────────────────────────────────────────
-    const htmlCleanup = () => htmlInputs.forEach(el => { el.remove(); });
+    const htmlCleanup = () => {
+        htmlInputs.forEach(el => el.remove());
+        if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
+    };
 
     // ── button factory (reuses existing game style) ───────────────────────────
     const BH = 54, BW = 240;
@@ -5801,6 +5818,7 @@ _applyMirrorEffect() {
     const regUser  = makeHtmlInput(cx, rY1, fieldW, fieldH, 'Username');
     const regEmail = makeHtmlInput(cx, rY2, fieldW, fieldH, 'Email');
     const regPass  = makeHtmlInput(cx, rY3, fieldW, fieldH, 'Password', true);
+    regUser.el.style.display = 'none'; regEmail.el.style.display = 'none'; regPass.el.style.display = 'none';
 
     const doRegister = async () => {
         const user  = regUser.getValue().trim();
@@ -5891,6 +5909,12 @@ _applyMirrorEffect() {
         registerContainer.setVisible(idx === 1);
         loginBtn.setVisible(idx === 0);
         registerBtn.setVisible(idx === 1);
+        // show/hide HTML inputs per tab
+        loginUser.el.style.display = idx === 0 ? '' : 'none';
+        loginPass.el.style.display = idx === 0 ? '' : 'none';
+        regUser.el.style.display   = idx === 1 ? '' : 'none';
+        regEmail.el.style.display  = idx === 1 ? '' : 'none';
+        regPass.el.style.display   = idx === 1 ? '' : 'none';
         statusTxt.setText('');
     };
 
