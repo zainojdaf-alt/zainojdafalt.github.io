@@ -37,7 +37,6 @@ app.post('/registerGJAccount.php', (req, res) => {
   res.send('1');
 });
 
-
 // LOGIN
 app.post('/loginGJAccount.php', (req, res) => {
   const { username, password } = req.body;
@@ -53,6 +52,39 @@ app.post('/loginGJAccount.php', (req, res) => {
   res.send('1');
 });
 
+// ✅ LEVEL DOWNLOAD PROXY (THIS FIXES YOUR 404)
+app.post('/downloadGJLevel22.php', async (req, res) => {
+  try {
+    const response = await fetch('https://www.boomlings.com/database/downloadGJLevel22.php', {
+      method: 'POST',
+      body: new URLSearchParams(req.body)
+    });
+
+    const text = await response.text();
+    res.send(text);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('proxy error');
+  }
+});
+
+// OPTIONAL (you’ll probably need this next for search)
+app.post('/getGJLevels21.php', async (req, res) => {
+  try {
+    const response = await fetch('https://www.boomlings.com/database/getGJLevels21.php', {
+      method: 'POST',
+      body: new URLSearchParams(req.body)
+    });
+
+    const text = await response.text();
+    res.send(text);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('proxy error');
+  }
+});
+
+// TEST ROUTE
 app.get('/', (req, res) => {
   res.send('Backend running ✅');
 });
