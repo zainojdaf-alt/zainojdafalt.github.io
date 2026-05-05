@@ -4777,6 +4777,339 @@ _applyMirrorEffect() {
       this._makeBouncyButton(_0xdde774, 1, _0x2d4335.action);
     }
   }
+
+  _buildAccountPopup() {
+    if (this._accountPopupOpen) {
+      return;
+    }
+    this._accountPopupOpen = true;
+    this._accountPopupObjects = [];
+    this._accountPopupHtmlInputs = [];
+
+    const sw = screenWidth;
+    const sh = screenHeight;
+    const panelW = 640;
+    const panelH = 460;
+    const panelCX = sw / 2;
+    const panelCY = sh / 2;
+
+    const overlay = this.add.rectangle(panelCX, panelCY, sw, sh, 0x000000, 0.76)
+      .setScrollFactor(0)
+      .setDepth(250)
+      .setInteractive();
+    this._accountPopupObjects.push(overlay);
+
+    const panelBg = this.add.rectangle(panelCX, panelCY, panelW, panelH, 0x121212, 0.96)
+      .setScrollFactor(0)
+      .setDepth(251);
+    this._accountPopupObjects.push(panelBg);
+
+    const panelBorder = this.add.rectangle(panelCX, panelCY, panelW - 10, panelH - 10, 0x000000, 0.45)
+      .setStrokeStyle(2, 0xffffff, 0.18)
+      .setScrollFactor(0)
+      .setDepth(252);
+    this._accountPopupObjects.push(panelBorder);
+
+    const titleText = this.add.bitmapText(panelCX, panelCY - panelH / 2 + 50, "bigFont", "Account", 46)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(253);
+    this._accountPopupObjects.push(titleText);
+
+    const closeBtn = this.add.container(panelCX + panelW / 2 - 42, panelCY - panelH / 2 + 42);
+    const closeRect = this.add.rectangle(0, 0, 60, 46, 0xffffff, 0.08).setOrigin(0.5).setScrollFactor(0).setDepth(253);
+    const closeTxt = this.add.bitmapText(0, 0, "goldFont", "X", 32).setOrigin(0.5).setScrollFactor(0).setDepth(254);
+    closeBtn.add([closeRect, closeTxt]);
+    closeBtn.setSize(60, 46);
+    closeBtn.setInteractive({ useHandCursor: true });
+    closeBtn.on("pointerup", () => this._closeAccountPopup());
+    this._accountPopupObjects.push(closeBtn);
+
+    const tabY = panelCY - panelH / 2 + 115;
+    const tabW = 190;
+    const tabH = 54;
+
+    const loginTabBg = this.add.rectangle(panelCX - 110, tabY, tabW, tabH, 0xffffff, 0.12)
+      .setScrollFactor(0)
+      .setDepth(253);
+    const registerTabBg = this.add.rectangle(panelCX + 110, tabY, tabW, tabH, 0xffffff, 0.08)
+      .setScrollFactor(0)
+      .setDepth(253);
+    const loginTabLabel = this.add.bitmapText(panelCX - 110, tabY, "goldFont", "Login", 30)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(254);
+    const registerTabLabel = this.add.bitmapText(panelCX + 110, tabY, "goldFont", "Register", 30)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(254);
+
+    loginTabBg.setInteractive({ useHandCursor: true });
+    registerTabBg.setInteractive({ useHandCursor: true });
+    loginTabBg.on("pointerup", () => setActiveTab("login"));
+    registerTabBg.on("pointerup", () => setActiveTab("register"));
+    this._accountPopupObjects.push(loginTabBg, registerTabBg, loginTabLabel, registerTabLabel);
+
+    const statusText = this.add.bitmapText(panelCX, panelCY + panelH / 2 - 92, "goldFont", "", 24)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(254);
+    this._accountPopupObjects.push(statusText);
+
+    const buttonBg = this.add.rectangle(panelCX, panelCY + panelH / 2 - 40, 220, 62, 0xffffff, 0.12)
+      .setScrollFactor(0)
+      .setDepth(253);
+    const buttonText = this.add.bitmapText(panelCX, panelCY + panelH / 2 - 42, "goldFont", "Login", 34)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(254);
+    const buttonZone = this.add.zone(panelCX, panelCY + panelH / 2 - 40, 220, 62)
+      .setScrollFactor(0)
+      .setDepth(254)
+      .setInteractive({ useHandCursor: true });
+    buttonZone.on("pointerup", () => submitForm());
+    this._accountPopupObjects.push(buttonBg, buttonText, buttonZone);
+
+    const inputW = 420;
+    const inputH = 48;
+    const inputX = panelCX - inputW / 2;
+    const inputStartY = panelCY - 40;
+    const inputSpacing = 66;
+
+    const createHtmlInput = (name, type, placeholder, relIndex) => {
+      const canvas = this.sys.game.canvas;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = rect.width / sw;
+      const scaleY = rect.height / sh;
+      const input = document.createElement("input");
+      input.type = type;
+      input.name = name;
+      input.placeholder = placeholder;
+      input.maxLength = 64;
+      input.style.cssText = `
+        position: fixed;
+        left: ${rect.left + inputX * scaleX}px;
+        top: ${rect.top + (inputStartY + relIndex * inputSpacing) * scaleY}px;
+        width: ${inputW * scaleX}px;
+        height: ${inputH * scaleY}px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.35);
+        border-radius: 10px;
+        outline: none;
+        color: #ffffff;
+        font-size: ${Math.round(18 * scaleY)}px;
+        font-family: Arial, sans-serif;
+        padding: 0 12px;
+        box-sizing: border-box;
+        z-index: 9999;
+        caret-color: #ffffff;
+      `;
+      input.style.color = "#ffffff";
+      input.style.caretColor = "#ffffff";
+      input.style.background = "rgba(255,255,255,0.08)";
+      input.style.border = "1px solid rgba(255,255,255,0.35)";
+      input.style.borderRadius = "10px";
+      input.style.padding = "0 12px";
+      input.style.textAlign = "left";
+      input.style.visibility = "visible";
+      document.body.appendChild(input);
+      this._accountPopupHtmlInputs.push(input);
+      return input;
+    };
+
+    const fields = {
+      login: [
+        { key: "loginUser", type: "text", placeholder: "Username or email" },
+        { key: "loginPass", type: "password", placeholder: "Password" }
+      ],
+      register: [
+        { key: "registerUser", type: "text", placeholder: "Username" },
+        { key: "registerEmail", type: "text", placeholder: "Email" },
+        { key: "registerPass", type: "password", placeholder: "Password" },
+        { key: "registerConfirm", type: "password", placeholder: "Confirm password" }
+      ]
+    };
+
+    const savedAccount = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("gdAccountData") || "{}");
+      } catch (e) {
+        return {};
+      }
+    })();
+
+    const htmlInputs = {};
+    let totalIndex = 0;
+    for (const tab of ["login", "register"]) {
+      for (const field of fields[tab]) {
+        const input = createHtmlInput(field.key, field.type, field.placeholder, totalIndex);
+        input.style.display = "none";
+        if (field.key === "loginUser" && savedAccount.username) {
+          input.value = savedAccount.username;
+        }
+        if (field.key === "registerEmail" && savedAccount.email) {
+          input.value = savedAccount.email;
+        }
+        htmlInputs[field.key] = input;
+        totalIndex++;
+      }
+    }
+
+    const resizeInputs = () => {
+      const canvas = this.sys.game.canvas;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = rect.width / sw;
+      const scaleY = rect.height / sh;
+      let visibleIndex = 0;
+      for (const tab of ["login", "register"]) {
+        for (const field of fields[tab]) {
+          const input = htmlInputs[field.key];
+          input.style.left = `${rect.left + inputX * scaleX}px`;
+          input.style.width = `${inputW * scaleX}px`;
+          input.style.height = `${inputH * scaleY}px`;
+          input.style.fontSize = `${Math.round(18 * scaleY)}px`;
+          if (input.style.display !== "none") {
+            input.style.top = `${Math.round((rect.top || 0) + (inputStartY + visibleIndex * inputSpacing) * scaleY)}px`;
+            visibleIndex++;
+          }
+        }
+      }
+    };
+
+    this._accountPopupInputResizeFn = resizeInputs;
+    window.addEventListener("resize", resizeInputs);
+
+    const updateTabStyles = (activeTab) => {
+      const activeFill = 0xffffff;
+      const passiveFill = 0xffffff;
+      const activeAlpha = 0.18;
+      const passiveAlpha = 0.08;
+      loginTabBg.setFillStyle(activeFill, activeTab === "login" ? activeAlpha : passiveAlpha);
+      registerTabBg.setFillStyle(activeFill, activeTab === "register" ? activeAlpha : passiveAlpha);
+      loginTabLabel.setTint(activeTab === "login" ? 0xffffff : 0x999999);
+      registerTabLabel.setTint(activeTab === "register" ? 0xffffff : 0x999999);
+      buttonText.setText(activeTab === "login" ? "Login" : "Register");
+    };
+
+    const showForm = (activeTab) => {
+      let visibleIndex = 0;
+      for (const tab of ["login", "register"]) {
+        for (const field of fields[tab]) {
+          const input = htmlInputs[field.key];
+          const isActive = tab === activeTab;
+          input.style.display = isActive ? "block" : "none";
+          if (isActive) {
+            const rect = this.sys.game.canvas.getBoundingClientRect();
+            const scaleY = rect.height / sh;
+            input.style.top = `${Math.round((rect.top || 0) + (inputStartY + visibleIndex * inputSpacing) * scaleY)}px`;
+            visibleIndex++;
+          }
+        }
+      }
+      updateTabStyles(activeTab);
+      if (activeTab === "login") {
+        htmlInputs.loginUser.focus();
+      } else {
+        htmlInputs.registerUser.focus();
+      }
+      statusText.setText("");
+      statusText.setTint(0xffffff);
+    };
+
+    const setActiveTab = (tab) => {
+      this._accountPopupCurrentTab = tab;
+      showForm(tab);
+      resizeInputs();
+    };
+
+    const showStatus = (text, color = 0xffffff) => {
+      statusText.setText(text);
+      statusText.setTint(color);
+    };
+
+    const saveAccountData = (data) => {
+      try {
+        localStorage.setItem("gdAccountData", JSON.stringify(data));
+      } catch (err) {
+      }
+    };
+
+    const submitForm = () => {
+      if (this._accountPopupCurrentTab === "login") {
+        const username = htmlInputs.loginUser.value.trim();
+        const password = htmlInputs.loginPass.value.trim();
+        if (!username || !password) {
+          showStatus("Fill all fields in.", 0xff6666);
+          return;
+        }
+        saveAccountData({ username, email: savedAccount.email || "" });
+        localStorage.setItem("gdLastLoggedInUser", username);
+        localStorage.setItem("gdAccountBackup", JSON.stringify({ username, backedUpAt: Date.now(), currentLevel: window.currentlevel?.[2] || null }));
+        showStatus("Logged in and account data backed up.", 0x88ff88);
+      } else {
+        const username = htmlInputs.registerUser.value.trim();
+        const email = htmlInputs.registerEmail.value.trim();
+        const password = htmlInputs.registerPass.value.trim();
+        const confirm = htmlInputs.registerConfirm.value.trim();
+        if (!username || !email || !password || !confirm) {
+          showStatus("Fill all fields in.", 0xff6666);
+          return;
+        }
+        if (password !== confirm) {
+          showStatus("Passwords do not match.", 0xff6666);
+          return;
+        }
+        saveAccountData({ username, email });
+        localStorage.setItem("gdRegisteredAt", Date.now().toString());
+        localStorage.setItem("gdAccountBackup", JSON.stringify({ username, email, backedUpAt: Date.now(), currentLevel: window.currentlevel?.[2] || null }));
+        showStatus("Registration saved locally and backed up.", 0x88ff88);
+      }
+    };
+
+    const handleEnterKey = (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitForm();
+      }
+    };
+
+    for (const input of Object.values(htmlInputs)) {
+      input.addEventListener("keydown", handleEnterKey);
+    }
+
+    this._accountPopupOnKeyDown = handleEnterKey;
+
+    setActiveTab("login");
+  }
+
+  _closeAccountPopup() {
+    if (!this._accountPopupOpen) {
+      return;
+    }
+    this._accountPopupOpen = false;
+    if (this._accountPopupInputResizeFn) {
+      window.removeEventListener("resize", this._accountPopupInputResizeFn);
+      this._accountPopupInputResizeFn = null;
+    }
+    if (this._accountPopupHtmlInputs) {
+      for (const input of this._accountPopupHtmlInputs) {
+        if (input && input.remove) {
+          input.remove();
+        }
+      }
+      this._accountPopupHtmlInputs = null;
+    }
+    if (this._accountPopupObjects) {
+      for (const obj of this._accountPopupObjects) {
+        if (obj && obj.destroy) {
+          obj.destroy();
+        }
+      }
+      this._accountPopupObjects = null;
+    }
+    this._accountPopupCurrentTab = null;
+  }
+
   _playSettingsStarAward() {
     if (!this._settingsLayerInternal) {
       return;
