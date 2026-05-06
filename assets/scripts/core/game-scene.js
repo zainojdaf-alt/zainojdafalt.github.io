@@ -532,31 +532,38 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       const _doSearchInner = async (levelId) => {
         _showStatus("fetching level", "#ffb700");
 
-        const PROXY_BASE = (window._gdLevelProxy || "").replace(/\/$/, "");
+
+        const PROXY_BASE = (window._gdProxyUrl || "").replace(/\/$/, "");
         if (!PROXY_BASE) {
-          _showStatus("no proxy configured. set window._gdProxyUrl first.", "#ff0000");
+          _showStatus("No server proxy configured. Please try again later.", "#ff0000");
           return;
         }
-       const formBody = `levelID=${levelId}&inc=1&extras=1&secret=Wmfd2893gb7`;
-const res = await fetch(
-  `https://api.allorigins.win/raw?url=${encodeURIComponent("https://www.boomlings.com/database/downloadGJLevel22.php")}`,
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: formBody
-  }
-);
-        if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
-
-const rawResponse = await res.text();
-alert("STATUS: " + res.status);
-alert("TEXT: " + rawResponse);
-alert("RAW: " + rawResponse);
-
-if (!rawResponse || rawResponse.trim() === "-1" || !rawResponse.includes(":")) {
-  _showStatus("level not found from servers. check the id and try again.", "#ff0000");
-  return;
-}
+        const formBody = `levelID=${levelId}&inc=1&extras=1&secret=Wmfd2893gb7`;
+        let res, rawResponse;
+        try {
+          res = await fetch(`${PROXY_BASE}/downloadGJLevel22.php`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formBody
+          });
+        } catch (err) {
+          _showStatus("Network error: failed to fetch level. Please check your connection or try again later.", "#ff0000");
+          return;
+        }
+        if (!res.ok) {
+          _showStatus(`Server error: ${res.status}. Please try again later.", "#ff0000");
+          return;
+        }
+        try {
+          rawResponse = await res.text();
+        } catch (err) {
+          _showStatus("Error reading server response.", "#ff0000");
+          return;
+        }
+        if (!rawResponse || rawResponse.trim() === "-1" || !rawResponse.includes(":")) {
+          _showStatus("Level not found or blocked by server. Check the ID and try again.", "#ff0000");
+          return;
+        }
 
 // 1️⃣ fill gdMap FIRST
 const gdMap = {};
@@ -5052,7 +5059,7 @@ _applyMirrorEffect() {
       }
     };
 
-    const submitForm = () => {
+    const submitForm = async () => {
       if (this._accountPopupCurrentTab === "login") {
         const username = htmlInputs.loginUser.value.trim();
         const password = htmlInputs.loginPass.value.trim();
@@ -5060,10 +5067,25 @@ _applyMirrorEffect() {
           showStatus("Fill all fields in.", 0xff6666);
           return;
         }
-        saveAccountData({ username, email: savedAccount.email || "" });
-        localStorage.setItem("gdLastLoggedInUser", username);
-        localStorage.setItem("gdAccountBackup", JSON.stringify({ username, backedUpAt: Date.now(), currentLevel: window.currentlevel?.[2] || null }));
-        showStatus("Logged in and account data backed up.", 0x88ff88);
+        showStatus("Logging in...", 0xffff66);
+        try {
+          const res = await fetch((window._gdProxyUrl || "") + "/loginGJAccount.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+          const text = await res.text();
+          if (text.trim() === "1") {
+            saveAccountData({ username, email: savedAccount.email || "" });
+            localStorage.setItem("gdLastLoggedInUser", username);
+            localStorage.setItem("gdAccountBackup", JSON.stringify({ username, backedUpAt: Date.now(), currentLevel: window.currentlevel?.[2] || null }));
+            showStatus("Logged in and account data backed up.", 0x88ff88);
+          } else {
+            showStatus("Login failed. Check your username and password.", 0xff6666);
+          }
+        } catch (err) {
+          showStatus("Network error: failed to login.", 0xff6666);
+        }
       } else {
         const username = htmlInputs.registerUser.value.trim();
         const email = htmlInputs.registerEmail.value.trim();
@@ -5077,10 +5099,27 @@ _applyMirrorEffect() {
           showStatus("Passwords do not match.", 0xff6666);
           return;
         }
-        saveAccountData({ username, email });
-        localStorage.setItem("gdRegisteredAt", Date.now().toString());
-        localStorage.setItem("gdAccountBackup", JSON.stringify({ username, email, backedUpAt: Date.now(), currentLevel: window.currentlevel?.[2] || null }));
-        showStatus("Registration saved locally and backed up.", 0x88ff88);
+        showStatus("Registering...", 0xffff66);
+        try {
+          const res = await fetch((window._gdProxyUrl || "") + "/registerGJAccount.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+          const text = await res.text();
+          if (text.trim() === "1") {
+            saveAccountData({ username, email });
+            localStorage.setItem("gdRegisteredAt", Date.now().toString());
+            localStorage.setItem("gdAccountBackup", JSON.stringify({ username, email, backedUpAt: Date.now(), currentLevel: window.currentlevel?.[2] || null }));
+            showStatus("Registration successful and backed up.", 0x88ff88);
+          } else if (text.trim() === "-1") {
+            showStatus("Username already exists.", 0xff6666);
+          } else {
+            showStatus("Registration failed. Try again.", 0xff6666);
+          }
+        } catch (err) {
+          showStatus("Network error: failed to register.", 0xff6666);
+        }
       }
     };
 

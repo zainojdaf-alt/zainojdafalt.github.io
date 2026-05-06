@@ -1,3 +1,14 @@
+// Helper for robust fetch with error handling and user feedback
+async function safeFetch(url, options, errorMsg) {
+	try {
+		const res = await fetch(url, options);
+		if (!res.ok) throw new Error(`${errorMsg} (status ${res.status})`);
+		return res;
+	} catch (err) {
+		alert(errorMsg + '\n' + (err.message || err));
+		throw err;
+	}
+}
 window.ApiWrapper = class ApiWrapper {
 	static setProxy(string) {
 		this.proxyurl = string
@@ -6,29 +17,29 @@ window.ApiWrapper = class ApiWrapper {
 		return this.proxyurl;
 	}
 	static async downloadSong(id) {
-		let data = `songID=${id}&secret=Wmfd2893gb7`
-		let response = await fetch(window._gdProxyUrl + "/getGJSongInfo.php", {
+		let data = `songID=${id}&secret=Wmfd2893gb7`;
+		let response = await safeFetch(window._gdProxyUrl + "/getGJSongInfo.php", {
 			method: "POST",
 			body: data
-		});
+		}, "Failed to fetch song info from server.");
 		let text = await response.text();
 		let url = decodeURIComponent(text?.split("~|~10~|~")[1]?.split("~|~")[0]);
-		let audioresponse = await fetch(url);
+		let audioresponse = await safeFetch(url, {}, "Failed to fetch song audio.");
 		let blob = await audioresponse.blob();
 		return window.URL.createObjectURL(blob);
 	}
-    static async downloadSfx(id){
-		let audioresponse = await fetch("https://geometrydashfiles.b-cdn.net/sfx/s"+id+".ogg");
+	static async downloadSfx(id){
+		let audioresponse = await safeFetch("https://geometrydashfiles.b-cdn.net/sfx/s"+id+".ogg", {}, "Failed to fetch SFX.");
 		let blob = await audioresponse.blob();
 		return window.URL.createObjectURL(blob);
-    }
+	}
 	static async downloadLevel(id) {
 		console.log("DOWNLOAD LEVEL CALLED WITH ID:", id);
-		let data = `levelID=${id}&inc=1&extras=1&secret=Wmfd2893gb7`
-		let response = await fetch(window._gdProxyUrl + "/downloadGJLevel22.php", {
+		let data = `levelID=${id}&inc=1&extras=1&secret=Wmfd2893gb7`;
+		let response = await safeFetch(window._gdProxyUrl + "/downloadGJLevel22.php", {
 			method: "POST",
 			body: data
-		});
+		}, "Failed to fetch level data from server.");
 		let text = await response.text();
 		console.log("LEVEL RAW:", text);
 
