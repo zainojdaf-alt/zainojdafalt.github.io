@@ -545,7 +545,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         });
         if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
 const rawResponse = await res.text();
-_showStatus("RAW: " + rawResponse, "#ffffff");
+alert("RAW: " + rawResponse);
 
 if (!rawResponse || rawResponse.trim() === "-1" || !rawResponse.includes(":")) {
   _showStatus("level not found from servers. check the id and try again.", "#ff0000");
