@@ -55,18 +55,23 @@ app.post('/loginGJAccount.php', (req, res) => {
 // ✅ LEVEL DOWNLOAD PROXY (THIS FIXES YOUR 404)
 app.post('/downloadGJLevel22.php', async (req, res) => {
   try {
+    const params = new URLSearchParams();
+    for (const key in req.body) {
+      params.append(key, req.body[key]);
+    }
+
     const response = await fetch('https://www.boomlings.com/database/downloadGJLevel22.php', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: new URLSearchParams(req.body).toString()
+      body: params.toString()
     });
 
     const text = await response.text();
-    res.send(text);
+    console.log("PROXY RESPONSE:", text); // 👈 ADD THIS
 
+    res.send(text);
   } catch (err) {
     console.error(err);
     res.status(500).send('proxy error');
