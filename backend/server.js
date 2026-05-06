@@ -59,23 +59,13 @@ app.post('/loginGJAccount.php', (req, res) => {
 
 // LEVEL DOWNLOAD PROXY (THIS FIXES 404)
 
+
 app.post('/downloadGJLevel22.php', async (req, res) => {
   try {
     const levelID = req.body.levelID;
-
     const response = await fetch(`https://gdbrowser.com/api/level/${levelID}`);
     const text = await response.text();
-
     res.send(text);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('proxy error');
-  }
-});
-
-    const text = await response.text();
-    res.send(text);
-
   } catch (err) {
     console.error(err);
     res.status(500).send('proxy error');
