@@ -61,17 +61,15 @@ app.post('/downloadGJLevel22.php', async (req, res) => {
       params.append(key, req.body[key]);
     }
 
-    const response = await fetch('https://www.boomlings.com/database/downloadGJLevel22.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': '*/*',
-        'Origin': 'https://www.boomlings.com',
-        'Referer': 'https://www.boomlings.com/'
-      },
-      body: params.toString()
-    });
+const response = await fetch('https://www.boomlings.com/database/downloadGJLevel22.php', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'User-Agent': 'Mozilla/5.0',
+    'Accept': '*/*'
+  },
+  body: new URLSearchParams(req.body)
+});
 
     const text = await response.text();
     res.send(text);
