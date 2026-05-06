@@ -532,17 +532,20 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       const _doSearchInner = async (levelId) => {
         _showStatus("fetching level", "#ffb700");
 
-        const PROXY_BASE = (window._gdProxyUrl || "").replace(/\/$/, "");
+        const PROXY_BASE = (window._gdLevelProxy || "").replace(/\/$/, "");
         if (!PROXY_BASE) {
           _showStatus("no proxy configured. set window._gdProxyUrl first.", "#ff0000");
           return;
         }
        const formBody = `levelID=${levelId}&inc=1&extras=1&secret=Wmfd2893gb7`;
-        const res = await fetch(`${PROXY_BASE}/downloadGJLevel22.php`, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formBody
-        });
+       const res = await fetch(
+  `https://corsproxy.io/?https://www.boomlings.com/database/downloadGJLevel22.php`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: formBody
+  }
+);
         if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
 
 const rawResponse = await res.text();
