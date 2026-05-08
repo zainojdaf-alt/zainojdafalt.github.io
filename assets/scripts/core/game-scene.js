@@ -539,7 +539,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       inputContainer.fillRoundedRect(inputX - 10, inputY - 10, inputW + 145, inputH + 20, 12);
       const titleLabel = this.add.bitmapText(sw / 2, panelY + 30, "bigFont", "Search by Level ID", 24)
         .setScrollFactor(0).setDepth(105).setOrigin(0.5, 0.5).setTint(0xffffff);
-      const placeholderLabel = this.add.bitmapText(sw / 2, inputY + inputH / 2, "bigFont", "Enter a level, user or ID", 20)
+      const placeholderLabel = this.add.bitmapText(sw / 2, inputY + inputH / 2, "bigFont", "Enter level ID", 20)
         .setScrollFactor(0).setDepth(105).setOrigin(0.5, 0.5).setTint(0x6999d8);
       const typedLabel = this.add.bitmapText(sw / 2, inputY + inputH / 2, "bigFont", "", 20)
         .setScrollFactor(0).setDepth(105).setOrigin(0.5, 0.5).setTint(0xffffff);
