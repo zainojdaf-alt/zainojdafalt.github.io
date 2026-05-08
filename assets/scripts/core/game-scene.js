@@ -452,6 +452,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
     this._searchOverlayObjects = [];
     this._openSearchMenu = () => {
       if (this._searchOverlay) return;
+      // Improved search menu UI based on PR #97 by antonfdiaz
       const sw = screenWidth;
       const sh = screenHeight;
 
@@ -488,9 +489,9 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       const inputW = 320;
       const inputH = 44;
       const inputX = sw / 2 - inputW / 2;
-      const inputY = panelY + 80;
+      const inputY = 50;
       const inputBg = this.add.graphics().setScrollFactor(0).setDepth(104);
-      inputBg.fillStyle(0x000000, 0.5);
+      inputBg.fillStyle(0x000000, 0.4);
       inputBg.fillRoundedRect(inputX, inputY, inputW, inputH, 8);
       inputBg.lineStyle(2, 0xffffff, 0.4);
       const canvas = this.sys.game.canvas;
@@ -519,11 +520,28 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       `;
       document.body.appendChild(htmlInput);
       setTimeout(() => htmlInput.focus(), 50);
+      const searchBtn = this.add.image(inputX + inputW + 35, inputY + inputH / 2, "GJ_GameSheet03", "GJ_longBtn06_001.png")
+        .setScrollFactor(0).setDepth(104).setInteractive().setScale(0.7);
+      this._makeBouncyButton(searchBtn, 0.7, () => {
+        _doSearch();
+      }, () => true);
+      
+      const clearSearchBtn = this.add.image(inputX + inputW + searchBtn.width + 20, inputY + inputH / 2, "GJ_GameSheet03", "GJ_longBtn07_001.png")
+        .setScrollFactor(0).setDepth(104).setInteractive().setScale(0.7);
+      this._makeBouncyButton(clearSearchBtn, 0.7, () => {
+        htmlInput.value = "";
+        placeholderLabel.setVisible(true);
+        typedLabel.setText("");
+      }, () => true);
+
+      const inputContainer = this.add.graphics().setScrollFactor(0).setDepth(103);
+      inputContainer.fillStyle(0x000000,0.4);
+      inputContainer.fillRoundedRect(inputX - 10, inputY - 10, inputW + 145, inputH + 20, 12);
       const titleLabel = this.add.bitmapText(sw / 2, panelY + 30, "bigFont", "Search by Level ID", 24)
         .setScrollFactor(0).setDepth(105).setOrigin(0.5, 0.5).setTint(0xffffff);
-      const placeholderLabel = this.add.bitmapText(sw / 2, inputY + inputH / 2, "bigFont", "Enter level ID", 18)
-        .setScrollFactor(0).setDepth(105).setOrigin(0.5, 0.5).setTint(0xaaddff);
-      const typedLabel = this.add.bitmapText(sw / 2, inputY + inputH / 2, "bigFont", "", 18)
+      const placeholderLabel = this.add.bitmapText(sw / 2, inputY + inputH / 2, "bigFont", "Enter a level, user or ID", 20)
+        .setScrollFactor(0).setDepth(105).setOrigin(0.5, 0.5).setTint(0x6999d8);
+      const typedLabel = this.add.bitmapText(sw / 2, inputY + inputH / 2, "bigFont", "", 20)
         .setScrollFactor(0).setDepth(105).setOrigin(0.5, 0.5).setTint(0xffffff);
       htmlInput.style.color = "transparent";
       htmlInput.style.caretColor = "#ffffff";
@@ -561,8 +579,8 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
       const demonBtnBorder = this.textures.get("GJ_button01").source[0].width * 0.3;
       const demonBtn9 = this._drawScale9(0, 0, demonBtnW, demonBtnH, "GJ_button01", demonBtnBorder, 0xffffff, 1);
       const demonBtnRect = this.add.rectangle(0, 0, demonBtnW, demonBtnH).setInteractive();
-      const demonBtnLabel = this.add.bitmapText(10, 0, "goldFont", "Demon List", 20).setOrigin(0, 0.5);
-      const demonIcon = this.add.image(-60, 0, "GJ_GameSheet03", "GJ_demonIcon_001.png").setScale(0.5);
+      const demonBtnLabel = this.add.bitmapText(10, 0, "goldFont", "list", 20).setOrigin(0, 0.5);
+      const demonIcon = this.add.image(-40, 0, "GJ_GameSheet03", "GJ_demonIcon_001.png").setScale(0.5);
       demonBtn.add([demonBtn9, demonBtnRect, demonIcon, demonBtnLabel]);
 
       const statusText = this.add.text(sw / 2, buttonY + 50, "", {
@@ -572,7 +590,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         align: "center",
         wordWrap: { width: 420 }
       }).setScrollFactor(0).setDepth(106).setOrigin(0.5, 0).setAlpha(0);
-      this._searchOverlayObjects.push(titleLabel, statusText, playBtn, demonBtn);
+      this._searchOverlayObjects.push(titleLabel, statusText, playBtn, demonBtn, searchBtn, clearSearchBtn, inputContainer);
       const _showStatus = (msg, color = "#ffffff", duration = 0) => {
         statusText.setText(msg);
         statusText.setColor(color);
@@ -580,25 +598,66 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
         statusText.setAlpha(1);
       };
       let _loading = false;
+
+      const loadingCircle = this.add.image(
+        inputX + inputW - 18,
+        inputY + inputH / 2,
+        "loadingCircle"
+      )
+      .setScrollFactor(0)
+      .setDepth(106)
+      .setOrigin(0.5)
+      .setScale(0.22)
+      .setAlpha(0)
+      .setVisible(false);
+
+      this._searchOverlayObjects.push(loadingCircle);
+
+      const loadingSpinTimer = this.time.addEvent({
+        delay: 16,
+        loop: true,
+        callback: () => {
+          if (!loadingCircle.scene) {
+            loadingSpinTimer.remove();
+            return;
+          }
+          if (loadingCircle.visible) {
+            loadingCircle.rotation += 0.1;
+          }
+        }
+      });
+
+      this._searchOverlayObjects.push({
+        destroy: () => loadingSpinTimer.remove()
+      });
+
+      const setSearchLoading = (isLoading) => {
+        loadingCircle.setVisible(isLoading);
+        loadingCircle.setAlpha(isLoading ? 0.7 : 0);
+        if (!isLoading) loadingCircle.rotation = 0;
+      };
+
       const _doSearch = async () => {
         if (_loading) return;
         const levelId = htmlInput.value.trim().replace(/\D/g, "");
         if (!levelId) {
-          _showStatus("enter a level id", "#ff6666", 3000);
+          _showStatus("Enter a level ID!", "#ff6666", 3000);
 
           return;
         }
         _loading = true;
+        setSearchLoading(true);
         try {
           await _doSearchInner(levelId);
         } catch (err) {
-          _showStatus("error: " + err.message, "#ff5555");
+          _showStatus("Error: " + err.message, "#ff5555");
         } finally {
           _loading = false;
+          setSearchLoading(false);
         }
       };
       const _doSearchInner = async (levelId) => {
-        _showStatus("fetching level", "#ffb700");
+        _showStatus("Fetching level...", "#ffb700");
 
 
         const formBody = `levelID=${levelId}&inc=1&extras=1&secret=Wmfd2893gb7`;
@@ -610,7 +669,7 @@ this._menuUpdateLogBtn = this.add.image(screenWidth - 30 - 50, 33, "GJ_WebSheet"
             body: formBody
           });
         } catch (err) {
-          _showStatus("Network error: failed to fetch level. Please check your connection or try again later.", "#ff0000");
+          _showStatus("Network error: Failed to fetch level. Please check your connection or try again later.", "#ff0000");
           return;
         }
         if (!res.ok) {
@@ -641,7 +700,7 @@ for (let i = 0; i < _gdMatches.length; i++) {
 // 2️⃣ THEN read values
 const levelString = gdMap["4"];
 if (!levelString) {
-  _showStatus("level data is empty or invalid.", "#ff0000");
+  _showStatus("Level not found or has invalid data.", "#ff0000");
   return;
 }
 
@@ -654,7 +713,7 @@ const songIdRaw     = (gdMap["35"] || "").trim();
         const songKey = isCustomSong ? `ng_song_${songIdRaw}` : window.allLevels[officialSongId][0];
         window.currentlevel[0] = songKey;
         window._onlineSongOffset = parseFloat(gdMap["45"] || "0") || 0;
-        _showStatus(`found "${levelName}"${isCustomSong ? ` — loading song #${songIdRaw}...` : ""}`, "#00ff00");
+        _showStatus(`Found "${levelName}"${isCustomSong ? ` — Loading song #${songIdRaw}...` : ""}`, "#00ff00");
         if (isCustomSong) {
           window._onlineSongBuffer = null; 
           window._onlineSongKey    = null;
@@ -674,7 +733,7 @@ const songIdRaw     = (gdMap["35"] || "").trim();
               const songArtist = (ngMap["4"]  || "Unknown").replace(/:$/, "").trim();
               const songTitle  = (ngMap["2"]  || `Song #${songIdRaw}`).replace(/:$/, "").trim();
               if (songUrl) {
-                _showStatus(`loading "${songTitle}" by ${songArtist}...`, "#00ff00");
+                _showStatus(`Loading "${songTitle}" by ${songArtist}...`, "#00ff00");
                 const audioCtx = this.game.sound.context;
                 if (audioCtx.state === "suspended") await audioCtx.resume();
                 const proxiedUrl = `${PROXY_BASE}/audio-proxy?url=${encodeURIComponent(songUrl)}`;
@@ -3050,24 +3109,124 @@ _buildSettingsPopup() {
     const bounceContainer = this.add.container(xPos, centerY).setScale(0);
     this._accountInfoPopup.add(bounceContainer);
     const cornerRadius = this.textures.get("square01_001").source[0].width * 0.325;
-    const panelBg = this._drawScale9(0, 0, 560, 300, "square01_001", cornerRadius, 16777215, 1);
+    const panelBg = this._drawScale9(0, 0, 560, 400, "square01_001", cornerRadius, 16777215, 1);
     bounceContainer.add(panelBg);
-    const title = this.add.bitmapText(0, -98, "goldFont", "Account", 42).setOrigin(0.5, 0.5);
+    const title = this.add.bitmapText(0, -140, "goldFont", "Profile", 42).setOrigin(0.5, 0.5);
     bounceContainer.add(title);
+
+    const storedAccountID = localStorage.getItem("gd_accountID");
+    const storedGJP = localStorage.getItem("gd_gjp");
+
+    if (storedAccountID && storedGJP) {
+      // Show profile
+      this._showProfileView(bounceContainer, storedAccountID, storedGJP);
+    } else {
+      // Show login
+      this._showLoginView(bounceContainer);
+    }
+
+    // Close function
+    this._accountInfoPopup._htmlInputs = [];
+    const okGroup = this.add.container(-5, 140);
+    const okBtnW = 90, okBtnH = 55;
+    const okBtnBorder = this.textures.get("GJ_button01").source[0].width * 0.3;
+    const okBtn9 = this._drawScale9(0, 0, okBtnW, okBtnH, "GJ_button01", okBtnBorder, 0xffffff, 1);
+    const okBtn = this.add.rectangle(0, 0, okBtnW, okBtnH).setInteractive();
+    okGroup.add(okBtn9);
+    okGroup.add(okBtn);
+    const okLabel = this.add.bitmapText(-3, -4, "goldFont", "OK", 44).setOrigin(0.5, 0.5);
+    okGroup.add(okLabel);
+    bounceContainer.add(okGroup);
+    okBtn.on("pointerdown", () => { okGroup._pressed = true; this.tweens.killTweensOf(okGroup); this.tweens.add({ targets: okGroup, scaleX: 1.26, scaleY: 1.26, duration: 300, ease: "Bounce.Out" }); });
+    okBtn.on("pointerout", () => { if (okGroup._pressed) { okGroup._pressed = false; this.tweens.killTweensOf(okGroup); this.tweens.add({ targets: okGroup, scaleX: 1, scaleY: 1, duration: 400, ease: "Bounce.Out" }); } });
+    okBtn.on("pointerup", () => { if (okGroup._pressed) { okGroup._pressed = false; this.tweens.killTweensOf(okGroup); okGroup.setScale(1); this._closeAccountInfoPopup(); } });
+    this.tweens.add({
+      targets: bounceContainer,
+      scale: { from: 0, to: 1 },
+      duration: 500,
+      ease: "Bounce.Out"
+    });
+  }
+  _showProfileView(bounceContainer, accountID, gjp) {
+    // Fetch and display profile info
+    const fetchUserInfo = async () => {
+      try {
+        const res = await fetchWithProxy("/getGJUserInfo.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `accountID=${accountID}&gjp=${gjp}&secret=Wmfd2893gb7`
+        });
+        const data = await res.text();
+        if (data === "-1") {
+          // Invalid, show login
+          this._showLoginView(bounceContainer);
+          return;
+        }
+        const parts = data.split(":");
+        const userMap = {};
+        for (let i = 0; i < parts.length; i += 2) {
+          userMap[parts[i]] = parts[i + 1];
+        }
+        const userName = userMap["1"] || "Unknown";
+        const stars = userMap["3"] || "0";
+        const demons = userMap["4"] || "0";
+        const icon = userMap["21"] || "1";
+        const color1 = userMap["10"] || "0";
+        const color2 = userMap["11"] || "3";
+
+        // Display profile
+        const iconImg = this.add.image(-150, -80, "GJ_GameSheetIcons", `player_ball_${icon.padStart(2, '0')}_001.png`).setScale(0.8);
+        bounceContainer.add(iconImg);
+
+        const nameText = this.add.bitmapText(0, -80, "goldFont", userName, 32).setOrigin(0.5);
+        bounceContainer.add(nameText);
+
+        const starsIcon = this.add.image(-100, -20, "GJ_GameSheet03", "GJ_starsIcon_001.png").setScale(0.6);
+        const starsText = this.add.bitmapText(-60, -20, "bigFont", stars, 24).setOrigin(0, 0.5);
+        bounceContainer.add(starsIcon);
+        bounceContainer.add(starsText);
+
+        const demonsIcon = this.add.image(-100, 10, "GJ_GameSheet03", "GJ_demonIcon_001.png").setScale(0.6);
+        const demonsText = this.add.bitmapText(-60, 10, "bigFont", demons, 24).setOrigin(0, 0.5);
+        bounceContainer.add(demonsIcon);
+        bounceContainer.add(demonsText);
+
+        // Logout button
+        const logoutBtn = this.add.container(0, 60).setScrollFactor(0).setDepth(1001);
+        const logoutBg = this.add.rectangle(0, 0, 120, 40, 0x222222, 0.8).setOrigin(0.5);
+        const logoutLabel = this.add.bitmapText(0, 0, "goldFont", "Logout", 24).setOrigin(0.5);
+        logoutBtn.add([logoutBg, logoutLabel]);
+        logoutBtn.setSize(120, 40);
+        logoutBtn.setInteractive({ useHandCursor: true });
+        bounceContainer.add(logoutBtn);
+        logoutBtn.on("pointerup", () => {
+          localStorage.removeItem("gd_accountID");
+          localStorage.removeItem("gd_gjp");
+          this._closeAccountInfoPopup();
+        });
+
+      } catch (err) {
+        // Error, show login
+        this._showLoginView(bounceContainer);
+      }
+    };
+    fetchUserInfo();
+  }
+  _showLoginView(bounceContainer) {
     // Add HTML inputs
     const inputW = 300;
     const inputH = 40;
     const inputY1 = -50;
     const inputY2 = 0;
-    const inputX = xPos - inputW / 2;
+    const inputX = screenWidth / 2 - inputW / 2;
     const inputBg1 = this.add.graphics().setScrollFactor(0).setDepth(1001);
     inputBg1.fillStyle(0x000000, 0.5);
-    inputBg1.fillRoundedRect(inputX, centerY + inputY1, inputW, inputH, 8);
+    inputBg1.fillRoundedRect(inputX, screenHeight / 2 + inputY1, inputW, inputH, 8);
     inputBg1.lineStyle(2, 0xffffff, 0.4);
     bounceContainer.add(inputBg1);
     const inputBg2 = this.add.graphics().setScrollFactor(0).setDepth(1001);
     inputBg2.fillStyle(0x000000, 0.5);
-    inputBg2.fillRoundedRect(inputX, centerY + inputY2, inputW, inputH, 8);
+    inputBg2.fillRoundedRect(inputX, screenHeight / 2 + inputY2, inputW, inputH, 8);
     inputBg2.lineStyle(2, 0xffffff, 0.4);
     bounceContainer.add(inputBg2);
     const htmlInput1 = document.createElement("input");
@@ -3077,7 +3236,7 @@ _buildSettingsPopup() {
     htmlInput1.style.cssText = `
       position: fixed;
       left: ${inputX}px;
-      top: ${centerY + inputY1}px;
+      top: ${screenHeight / 2 + inputY1}px;
       width: ${inputW}px;
       height: ${inputH}px;
       background: transparent;
@@ -3098,7 +3257,7 @@ _buildSettingsPopup() {
     htmlInput2.style.cssText = `
       position: fixed;
       left: ${inputX}px;
-      top: ${centerY + inputY2}px;
+      top: ${screenHeight / 2 + inputY2}px;
       width: ${inputW}px;
       height: ${inputH}px;
       background: transparent;
@@ -3113,12 +3272,12 @@ _buildSettingsPopup() {
     `;
     document.body.appendChild(htmlInput2);
     // Labels
-    const label1 = this.add.bitmapText(xPos, centerY + inputY1 - 25, "bigFont", "Account ID", 20).setOrigin(0.5).setTint(0xffffff);
+    const label1 = this.add.bitmapText(screenWidth / 2, screenHeight / 2 + inputY1 - 25, "bigFont", "Account ID", 20).setOrigin(0.5).setTint(0xffffff);
     bounceContainer.add(label1);
-    const label2 = this.add.bitmapText(xPos, centerY + inputY2 - 25, "bigFont", "GJP", 20).setOrigin(0.5).setTint(0xffffff);
+    const label2 = this.add.bitmapText(screenWidth / 2, screenHeight / 2 + inputY2 - 25, "bigFont", "GJP", 20).setOrigin(0.5).setTint(0xffffff);
     bounceContainer.add(label2);
     // Login button
-    const loginBtn = this.add.container(xPos, centerY + 60).setScrollFactor(0).setDepth(1001);
+    const loginBtn = this.add.container(screenWidth / 2, screenHeight / 2 + 60).setScrollFactor(0).setDepth(1001);
     const loginBg = this.add.rectangle(0, 0, 120, 40, 0x222222, 0.8).setOrigin(0.5);
     const loginLabel = this.add.bitmapText(0, 0, "goldFont", "Login", 24).setOrigin(0.5);
     loginBtn.add([loginBg, loginLabel]);
@@ -3126,22 +3285,14 @@ _buildSettingsPopup() {
     loginBtn.setInteractive({ useHandCursor: true });
     bounceContainer.add(loginBtn);
     // Info display
-    const infoText = this.add.text(xPos, centerY + 120, "", {
+    const infoText = this.add.text(screenWidth / 2, screenHeight / 2 + 120, "", {
       fontSize: "16px",
       fontFamily: "Arial, sans-serif",
       color: "#ffffff",
       align: "center"
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1001);
     bounceContainer.add(infoText);
-    // Load stored
-    const storedAccountID = localStorage.getItem("gd_accountID");
-    const storedGJP = localStorage.getItem("gd_gjp");
-    if (storedAccountID && storedGJP) {
-      htmlInput1.value = storedAccountID;
-      htmlInput2.value = storedGJP;
-      // Auto fetch
-      fetchUserInfo(storedAccountID, storedGJP);
-    }
+
     const fetchUserInfo = async (accountID, gjp) => {
       try {
         const res = await fetchWithProxy("/getGJUserInfo.php", {
@@ -3162,13 +3313,16 @@ _buildSettingsPopup() {
         const userName = userMap["1"];
         const stars = userMap["3"];
         const demons = userMap["4"];
-        const accountID2 = userMap["16"];
-        const icon = userMap["21"];
-        const color1 = userMap["10"];
-        const color2 = userMap["11"];
-        infoText.setText(`Name: ${userName}\nStars: ${stars}\nDemons: ${demons}\nAccount ID: ${accountID2}\nIcon: ${icon}\nColors: ${color1}, ${color2}`);
+        infoText.setText(`Logged in as ${userName}`);
+        // Store and refresh popup
+        localStorage.setItem("gd_accountID", accountID);
+        localStorage.setItem("gd_gjp", gjp);
+        setTimeout(() => {
+          this._closeAccountInfoPopup();
+          this._buildAccountInfoPopup();
+        }, 1000);
       } catch (err) {
-        infoText.setText("Error fetching user info");
+        infoText.setText("Error logging in");
       }
     };
     loginBtn.on("pointerup", () => {
@@ -3178,31 +3332,10 @@ _buildSettingsPopup() {
         infoText.setText("Enter Account ID and GJP");
         return;
       }
-      localStorage.setItem("gd_accountID", accountID);
-      localStorage.setItem("gd_gjp", gjp);
       fetchUserInfo(accountID, gjp);
     });
-    // Close function needs to remove inputs
+
     this._accountInfoPopup._htmlInputs = [htmlInput1, htmlInput2];
-    const okGroup = this.add.container(-5, 95);
-    const okBtnW = 90, okBtnH = 55;
-    const okBtnBorder = this.textures.get("GJ_button01").source[0].width * 0.3;
-    const okBtn9 = this._drawScale9(0, 0, okBtnW, okBtnH, "GJ_button01", okBtnBorder, 0xffffff, 1);
-    const okBtn = this.add.rectangle(0, 0, okBtnW, okBtnH).setInteractive();
-    okGroup.add(okBtn9);
-    okGroup.add(okBtn);
-    const okLabel = this.add.bitmapText(-3, -4, "goldFont", "OK", 44).setOrigin(0.5, 0.5);
-    okGroup.add(okLabel);
-    bounceContainer.add(okGroup);
-    okBtn.on("pointerdown", () => { okGroup._pressed = true; this.tweens.killTweensOf(okGroup); this.tweens.add({ targets: okGroup, scaleX: 1.26, scaleY: 1.26, duration: 300, ease: "Bounce.Out" }); });
-    okBtn.on("pointerout", () => { if (okGroup._pressed) { okGroup._pressed = false; this.tweens.killTweensOf(okGroup); this.tweens.add({ targets: okGroup, scaleX: 1, scaleY: 1, duration: 400, ease: "Bounce.Out" }); } });
-    okBtn.on("pointerup", () => { if (okGroup._pressed) { okGroup._pressed = false; this.tweens.killTweensOf(okGroup); okGroup.setScale(1); this._closeAccountInfoPopup(); } });
-    this.tweens.add({
-      targets: bounceContainer,
-      scale: { from: 0, to: 1 },
-      duration: 500,
-      ease: "Bounce.Out"
-    });
   }
   _closeAccountInfoPopup() {
     if (this._accountInfoPopup) {
